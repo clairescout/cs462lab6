@@ -1,14 +1,15 @@
 ruleset manage_sensors {
   meta {
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, showChildren, nameFromID, sensors
+    shares __testing, getChildren, nameFromID, sensors, sensorTemperatures
   }
 
   global {
     __testing = { "queries": [ { "name": "__testing" },
                                 {"name": "nameFromID", "args": ["sensor_id"]},
-                                {"name": "showChildren"},
-                                {"name": "sensors"}],
+                                {"name": "getChildren"},
+                                {"name": "sensors"},
+                                {"name": "sensorTemperatures"}],
                 "events": [ { "domain": "sensor", "type": "new_sensor",
                             "attrs": [ "sensor_id"] },
                             { "domain": "collection", "type": "empty" },
@@ -19,7 +20,7 @@ ruleset manage_sensors {
       "Sensor " + sensor_id + " Pico"
     }
 
-    showChildren = function() {
+    getChildren = function() {
       wrangler:children()
     }
 
@@ -29,6 +30,15 @@ ruleset manage_sensors {
 
     defaultTemperature = function() {
       ent:default_threshold.defaultsTo(74)
+    }
+
+    sensorTemperatures = function() {
+      sensors = getChildren();
+      sensors.map(function(sensor) {
+        eci = sensor{"eci"};
+        args = {};
+        wrangler:skyQuery(eci, "temperature_store", "temperatures", args);
+      });
     }
 
   }
